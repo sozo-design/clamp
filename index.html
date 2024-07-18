@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rem Clamp Generator</title>
+    <style>
+        /* Define styles here */
+    </style>
+</head>
+
+<body>
+    <label for="minWidthPx">Minimum viewport width =</label>
+    <input id="minWidthPx" type="number" value="414" min="0">
+    <span id="minWidthRem">0rem</span><br>
+
+    <label for="maxWidthPx">Maximum viewport width =</label>
+    <input id="maxWidthPx" type="number" value="1440" min="0">
+    <span id="maxWidthRem">0rem</span><br>
+
+    <label for="minFontSizePx">Minimum font size =</label>
+    <input id="minFontSizePx" type="number" value="16" min="0">
+    <span id="minFontSizeRem">0rem</span><br>
+
+    <label for="maxFontSizePx">Maximum font size =</label>
+    <input id="maxFontSizePx" type="number" value="28" min="0">
+    <span id="maxFontSizeRem">0rem</span><br>
+
+    <br><button id="generateBtn">Generate Clamp Code</button><button id="copyBtn">Copy</button>
+
+    <div id="resultBox"></div>
+
+
+    <script>
+        const minWidthPxInput = document.getElementById("minWidthPx")
+        const maxWidthPxInput = document.getElementById("maxWidthPx")
+        const minFontSizePxInput = document.getElementById("minFontSizePx")
+        const maxFontSizePxInput = document.getElementById("maxFontSizePx")
+        const resultBox = document.getElementById("resultBox")
+        const copyBtn = document.getElementById("copyBtn")
+
+        const generateClampCode = () => {
+            const minWidthPx = parseInt(minWidthPxInput.value)
+            const maxWidthPx = parseInt(maxWidthPxInput.value)
+            const minFontSizePx = parseInt(minFontSizePxInput.value)
+            const maxFontSizePx = parseInt(maxFontSizePxInput.value)
+
+            const pixelsPerRem = 16 // You can adjust this value based on your design
+            const minWidthRem = minWidthPx / pixelsPerRem
+            const maxWidthRem = maxWidthPx / pixelsPerRem
+            const minFontSizeRem = minFontSizePx / pixelsPerRem
+            const maxFontSizeRem = maxFontSizePx / pixelsPerRem
+
+            const slope = (maxFontSizeRem - minFontSizeRem) / (maxWidthRem - minWidthRem)
+            const yAxisIntersection = -minWidthRem * slope + minFontSizeRem
+
+            const clampFunc = `font-size: clamp(${minFontSizeRem.toFixed(4)}rem, ${yAxisIntersection.toFixed(4)}rem + ${(slope * 100).toFixed(4)}vw, ${maxFontSizeRem.toFixed(4)}rem);`
+
+            resultBox.innerHTML = `<pre>${clampFunc}</pre>`
+
+            copyBtn.innerText = "Copy"
+        }
+
+        const copyClampCode = () => {
+            // Copy the text inside the text field
+            navigator.clipboard.writeText(resultBox.innerText)
+
+            copyBtn.innerText = "Copied"
+        }
+
+        minWidthPxInput.addEventListener("input", () => {
+            document.getElementById("minWidthRem").textContent = (minWidthPxInput.value / 16).toFixed(2) + "rem"
+        })
+
+        maxWidthPxInput.addEventListener("input", () => {
+            document.getElementById("maxWidthRem").textContent = (maxWidthPxInput.value / 16).toFixed(2) + "rem"
+        })
+
+        minFontSizePxInput.addEventListener("input", () => {
+            document.getElementById("minFontSizeRem").textContent = (minFontSizePxInput.value / 16).toFixed(2) + "rem"
+        })
+
+        maxFontSizePxInput.addEventListener("input", () => {
+            document.getElementById("maxFontSizeRem").textContent = (maxFontSizePxInput.value / 16).toFixed(2) + "rem"
+        })
+
+        document.getElementById("generateBtn").addEventListener("click", generateClampCode)
+
+        copyBtn.addEventListener("click", copyClampCode)
+    </script>
+</body>
+
+</html>
