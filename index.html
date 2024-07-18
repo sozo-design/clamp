@@ -5,89 +5,131 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rem Clamp Generator</title>
-    <style>
-        /* Define styles here */
-    </style>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 
 <body>
-    <label for="minWidthPx">Minimum viewport width =</label>
-    <input id="minWidthPx" type="number" value="414" min="0">
-    <span id="minWidthRem">0rem</span><br>
+    <div class="container mx-auto p-4">
+        <h1 class="text-2xl font-bold mb-4">Responsive Font Size Generator</h1>
 
-    <label for="maxWidthPx">Maximum viewport width =</label>
-    <input id="maxWidthPx" type="number" value="1440" min="0">
-    <span id="maxWidthRem">0rem</span><br>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <label for="minWidthPx" class="block mb-1">Minimum viewport width (px)</label>
+                <input type="number" id="minWidthPx" class="w-full border rounded px-2 py-1" value="414">
+            </div>
+            <div>
+                <label for="maxWidthPx" class="block mb-1">Maximum viewport width (px)</label>
+                <input type="number" id="maxWidthPx" class="w-full border rounded px-2 py-1" value="1440">
+            </div>
+        </div>
 
-    <label for="minFontSizePx">Minimum font size =</label>
-    <input id="minFontSizePx" type="number" value="16" min="0">
-    <span id="minFontSizeRem">0rem</span><br>
+        <div id="fontSizeInputs" class="space-y-4">
+            <!-- Font size inputs will be generated here -->
+        </div>
 
-    <label for="maxFontSizePx">Maximum font size =</label>
-    <input id="maxFontSizePx" type="number" value="28" min="0">
-    <span id="maxFontSizeRem">0rem</span><br>
+        <button id="generateBtn" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Generate Clamp Code</button>
 
-    <br><button id="generateBtn">Generate Clamp Code</button><button id="copyBtn">Copy</button>
-
-    <div id="resultBox"></div>
-
+        <div class="mt-4 relative">
+            <pre id="resultBox" class="p-4 bg-gray-100 rounded overflow-x-auto"></pre>
+            <button id="copyBtn" class="absolute top-2 right-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-2 rounded text-sm">Copy</button>
+        </div>
+    </div>
 
     <script>
-        const minWidthPxInput = document.getElementById("minWidthPx")
-        const maxWidthPxInput = document.getElementById("maxWidthPx")
-        const minFontSizePxInput = document.getElementById("minFontSizePx")
-        const maxFontSizePxInput = document.getElementById("maxFontSizePx")
-        const resultBox = document.getElementById("resultBox")
-        const copyBtn = document.getElementById("copyBtn")
+        const fontSizeInputs = document.getElementById('fontSizeInputs');
+        const generateBtn = document.getElementById('generateBtn');
+        const resultBox = document.getElementById('resultBox');
+        const copyBtn = document.getElementById('copyBtn');
+        const minWidthPxInput = document.getElementById('minWidthPx');
+        const maxWidthPxInput = document.getElementById('maxWidthPx');
 
-        const generateClampCode = () => {
-            const minWidthPx = parseInt(minWidthPxInput.value)
-            const maxWidthPx = parseInt(maxWidthPxInput.value)
-            const minFontSizePx = parseInt(minFontSizePxInput.value)
-            const maxFontSizePx = parseInt(maxFontSizePxInput.value)
-
-            const pixelsPerRem = 16 // You can adjust this value based on your design
-            const minWidthRem = minWidthPx / pixelsPerRem
-            const maxWidthRem = maxWidthPx / pixelsPerRem
-            const minFontSizeRem = minFontSizePx / pixelsPerRem
-            const maxFontSizeRem = maxFontSizePx / pixelsPerRem
-
-            const slope = (maxFontSizeRem - minFontSizeRem) / (maxWidthRem - minWidthRem)
-            const yAxisIntersection = -minWidthRem * slope + minFontSizeRem
-
-            const clampFunc = `font-size: clamp(${minFontSizeRem.toFixed(4)}rem, ${yAxisIntersection.toFixed(4)}rem + ${(slope * 100).toFixed(4)}vw, ${maxFontSizeRem.toFixed(4)}rem);`
-
-            resultBox.innerHTML = `<pre>${clampFunc}</pre>`
-
-            copyBtn.innerText = "Copy"
+        // Generate 13 font size input rows
+        for (let i = 1; i <= 13; i++) {
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-3 gap-4';
+            row.innerHTML = `
+            <div>
+              <label for="minFontSize${i}" class="block mb-1">${i} - Min Font Size (px)</label>
+              <input type="number" id="minFontSize${i}" class="w-full border rounded px-2 py-1">
+              <span id="minFontSizeRem${i}" class="text-sm text-gray-600"></span>
+            </div>
+            <div>
+              <label for="maxFontSize${i}" class="block mb-1">${i} - Max Font Size (px)</label>
+              <input type="number" id="maxFontSize${i}" class="w-full border rounded px-2 py-1">
+              <span id="maxFontSizeRem${i}" class="text-sm text-gray-600"></span>
+            </div>
+            <div>
+              <label for="lineHeight${i}" class="block mb-1">${i} - Line Height (px)</label>
+              <input type="number" id="lineHeight${i}" class="w-full border rounded px-2 py-1">
+            </div>
+          `;
+            fontSizeInputs.appendChild(row);
         }
 
-        const copyClampCode = () => {
-            // Copy the text inside the text field
-            navigator.clipboard.writeText(resultBox.innerText)
+        const updateRemValue = (pxInput, remSpan) => {
+            const pxValue = parseFloat(pxInput.value);
+            if (!isNaN(pxValue)) {
+                remSpan.textContent = (pxValue / 16).toFixed(2) + 'rem';
+            } else {
+                remSpan.textContent = '';
+            }
+        };
 
-            copyBtn.innerText = "Copied"
+        minWidthPxInput.addEventListener('input', () => updateRemValue(minWidthPxInput, document.getElementById('minWidthRem')));
+        maxWidthPxInput.addEventListener('input', () => updateRemValue(maxWidthPxInput, document.getElementById('maxWidthRem')));
+
+        for (let i = 1; i <= 13; i++) {
+            const minFontSizeInput = document.getElementById(`minFontSize${i}`);
+            const maxFontSizeInput = document.getElementById(`maxFontSize${i}`);
+            minFontSizeInput.addEventListener('input', () => updateRemValue(minFontSizeInput, document.getElementById(`minFontSizeRem${i}`)));
+            maxFontSizeInput.addEventListener('input', () => updateRemValue(maxFontSizeInput, document.getElementById(`maxFontSizeRem${i}`)));
         }
 
-        minWidthPxInput.addEventListener("input", () => {
-            document.getElementById("minWidthRem").textContent = (minWidthPxInput.value / 16).toFixed(2) + "rem"
-        })
+        generateBtn.addEventListener('click', () => {
+            const minWidthPx = parseFloat(document.getElementById('minWidthPx').value);
+            const maxWidthPx = parseFloat(document.getElementById('maxWidthPx').value);
+            let result = '';
 
-        maxWidthPxInput.addEventListener("input", () => {
-            document.getElementById("maxWidthRem").textContent = (maxWidthPxInput.value / 16).toFixed(2) + "rem"
-        })
+            for (let i = 1; i <= 13; i++) {
+                const minFontSize = parseFloat(document.getElementById(`minFontSize${i}`).value);
+                const maxFontSize = parseFloat(document.getElementById(`maxFontSize${i}`).value);
+                const lineHeight = parseFloat(document.getElementById(`lineHeight${i}`).value);
 
-        minFontSizePxInput.addEventListener("input", () => {
-            document.getElementById("minFontSizeRem").textContent = (minFontSizePxInput.value / 16).toFixed(2) + "rem"
-        })
+                if (isNaN(minFontSize) || isNaN(maxFontSize) || isNaN(lineHeight)) continue;
 
-        maxFontSizePxInput.addEventListener("input", () => {
-            document.getElementById("maxFontSizeRem").textContent = (maxFontSizePxInput.value / 16).toFixed(2) + "rem"
-        })
+                const minFontSizeRem = minFontSize / 16;
+                const maxFontSizeRem = maxFontSize / 16;
+                const minWidthRem = minWidthPx / 16;
+                const maxWidthRem = maxWidthPx / 16;
 
-        document.getElementById("generateBtn").addEventListener("click", generateClampCode)
+                const slope = (maxFontSizeRem - minFontSizeRem) / (maxWidthRem - minWidthRem)
+                const yAxisIntersection = -minWidthRem * slope + minFontSizeRem
 
-        copyBtn.addEventListener("click", copyClampCode)
+                result += `/* font-size ${minFontSize} - ${maxFontSize} */
+.sz-text-${i} {
+    font-size: clamp(${minFontSizeRem.toFixed(4)}rem, ${yAxisIntersection.toFixed(4)}rem + ${(slope * 100).toFixed(4)}vw, ${maxFontSizeRem.toFixed(4)}rem);
+    line-height: ${lineHeight}px;
+}`;
+            }
+
+            resultBox.innerHTML = result;
+            copyBtn.textContent = 'Copy';
+            copyBtn.disabled = false;
+        });
+
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(resultBox.textContent).then(() => {
+                copyBtn.textContent = 'Copied!';
+                copyBtn.disabled = true;
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy';
+                    copyBtn.disabled = false;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
+        });
     </script>
 </body>
 
